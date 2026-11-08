@@ -46,7 +46,7 @@ TextLab/
 
 ## 👨‍💻 Author
 
-Created by [Your Name]
+Created by Vinh
 
 ## 📄 License
 
