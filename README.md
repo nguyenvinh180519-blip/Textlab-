@@ -44,15 +44,5 @@ TextLab is a modern, single-page web application focused on text utilities, craf
 - **Localization:** Instant toggle between **Tiếng Việt (VN)** and **English (EN)** with persistent state stored in `localStorage`.
 - **Responsive Layout:** Gracefully breaks down on mobile viewports with flexible grids, touch targets, and adaptive textareas.
 
----
-
-## 🚀 How to Run Locally & Deploy to GitHub Pages
-
-### Running Locally
-Simply open `index.html` in any modern web browser (Google Chrome, Microsoft Edge, Firefox, Safari):
-- Double-click `index.html` in your file explorer, or
-- Serve using any static server (e.g. `npx serve .` or VS Code Live Server).
-
-
 ## 📄 License
 MIT License. Open-source and free to customize.
