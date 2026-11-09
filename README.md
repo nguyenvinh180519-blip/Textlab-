@@ -53,24 +53,6 @@ Simply open `index.html` in any modern web browser (Google Chrome, Microsoft Edg
 - Double-click `index.html` in your file explorer, or
 - Serve using any static server (e.g. `npx serve .` or VS Code Live Server).
 
-### Deploying to GitHub Pages
-1. Create a new GitHub repository (e.g., `textlab`).
-2. Push `index.html` to the repository:
-   ```bash
-   git init
-   git add .
-   git commit -m "feat: initial commit of TextLab single-page app"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/textlab.git
-   git push -u origin main
-   ```
-3. In your GitHub repository:
-   - Navigate to **Settings** > **Pages**.
-   - Under **Build and deployment** > **Source**, choose **Deploy from a branch**.
-   - Select `main` branch and `/ (root)` folder, then click **Save**.
-4. Your site will be live at `https://<your-username>.github.io/textlab/` within seconds!
-
----
 
 ## 📄 License
 MIT License. Open-source and free to customize.
