@@ -1,0 +1,2563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TextLab — Modern Text Utilities</title>
+  <meta name="description" content="Modern text utilities: Language Translator, Word & Character Counter, and International Morse Code Converter. Inspired by Linear & Vercel design.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z'/><path d='M14 2v6h6' fill='%23818cf8'/></svg>">
+  
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       CSS Reset & Custom Properties (Linear / Vercel Dark Slate Theme)
+       ========================================================================== */
+    :root {
+      --bg-canvas: #0b0d13;
+      --bg-surface: #11141d;
+      --bg-panel: #161a26;
+      --bg-panel-hover: #1c2130;
+      --bg-input: #0e111a;
+      
+      --border-subtle: #232838;
+      --border-medium: #2e3549;
+      --border-focus: #6366f1;
+
+      --text-main: #f3f4f6;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+
+      --primary: #6366f1;
+      --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      --primary-hover: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+      --primary-glow: rgba(99, 102, 241, 0.25);
+      
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #ef4444;
+      --accent-cyan: #06b6d4;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 1px rgba(255, 255, 255, 0.05);
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.1);
+      --glow-panel: 0 0 30px rgba(99, 102, 241, 0.08);
+
+      --transition-fast: 0.15s ease;
+      --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Background Glow */
+    body::before {
+      content: "";
+      position: absolute;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      height: 450px;
+      background: radial-gradient(ellipse at top, rgba(99, 102, 241, 0.14), rgba(124, 58, 237, 0.07), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Subtle grid background pattern */
+    body::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+      mask-image: radial-gradient(ellipse at center top, black 30%, transparent 80%);
+      -webkit-mask-image: radial-gradient(ellipse at center top, black 30%, transparent 80%);
+    }
+
+    /* ==========================================================================
+       Header & Navigation Bar
+       ========================================================================== */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(11, 13, 19, 0.82);
+      border-bottom: 1px solid var(--border-subtle);
+      width: 100%;
+    }
+
+    .header-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-logo-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px var(--primary-glow);
+      color: #fff;
+    }
+
+    .brand-logo-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .brand-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      background: linear-gradient(180deg, #ffffff 30%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--radius-full);
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      color: #a5b4fc;
+      -webkit-text-fill-color: #a5b4fc;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* Language Switcher Button */
+    .lang-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.4rem 0.75rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .lang-toggle-btn:hover {
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border-color: var(--border-focus);
+    }
+
+    .lang-toggle-btn .flag {
+      font-size: 1.05rem;
+      line-height: 1;
+    }
+
+    .lang-badge-tag {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* ==========================================================================
+       Main Container & Hero
+       ========================================================================== */
+    .main-container {
+      position: relative;
+      z-index: 1;
+      max-width: 1180px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3.5rem;
+      flex: 1;
+    }
+
+    .hero-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #a5b4fc;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      padding: 0.25rem 0.8rem;
+      border-radius: var(--radius-full);
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-tag .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #818cf8;
+      box-shadow: 0 0 8px #818cf8;
+    }
+
+    .hero-title {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-desc {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    /* ==========================================================================
+       Tab Navigation (Segmented Switcher)
+       ========================================================================== */
+    .tab-bar-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .tab-bar {
+      display: inline-flex;
+      background: rgba(17, 20, 29, 0.9);
+      border: 1px solid var(--border-medium);
+      padding: 0.35rem;
+      border-radius: var(--radius-lg);
+      gap: 0.3rem;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow-x: auto;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.6rem 1.15rem;
+      border-radius: var(--radius-md);
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .tab-btn svg {
+      width: 17px;
+      height: 17px;
+      opacity: 0.7;
+      transition: opacity var(--transition-fast);
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-btn.active {
+      color: #ffffff;
+      background: rgba(99, 102, 241, 0.16);
+      border-color: rgba(99, 102, 241, 0.38);
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.18);
+    }
+
+    .tab-btn.active svg {
+      opacity: 1;
+      color: #818cf8;
+    }
+
+    /* ==========================================================================
+       Tab Panels & Animations
+       ========================================================================== */
+    .tab-panel {
+      display: none;
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ==========================================================================
+       Card & Panel Common Styles
+       ========================================================================== */
+    .panel-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-md);
+      transition: border-color var(--transition-fast);
+      position: relative;
+    }
+
+    .panel-card:hover {
+      border-color: var(--border-medium);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .panel-title-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .panel-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Form Inputs & Textareas */
+    .custom-textarea {
+      width: 100%;
+      min-height: 220px;
+      padding: 1rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+
+    .custom-textarea.monospace {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      letter-spacing: 0.02em;
+    }
+
+    .custom-textarea:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+      background: #0b0d14;
+    }
+
+    .custom-textarea::placeholder {
+      color: var(--text-dim);
+    }
+
+    .custom-textarea[readonly] {
+      background: rgba(14, 17, 26, 0.6);
+      cursor: text;
+    }
+
+    /* Select Inputs */
+    .custom-select {
+      background: var(--bg-input);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      padding: 0.5rem 2rem 0.5rem 0.85rem;
+      font-size: 0.88rem;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.6rem center;
+      transition: all var(--transition-fast);
+    }
+
+    .custom-select:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.55rem 1.1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      border: 1px solid transparent;
+      user-select: none;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: #fff;
+      box-shadow: 0 2px 10px var(--primary-glow);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--border-medium);
+      color: var(--text-muted);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.09);
+      color: var(--text-main);
+      border-color: var(--text-dim);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      padding: 0.4rem 0.65rem;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: var(--radius-md);
+    }
+
+    /* ==========================================================================
+       TAB 1: TRANSLATOR
+       ========================================================================== */
+    .translator-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-lg);
+      flex-wrap: wrap;
+    }
+
+    .lang-select-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .swap-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: var(--bg-panel);
+      border: 1px solid var(--border-medium);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .swap-btn:hover {
+      color: #fff;
+      border-color: var(--border-focus);
+      background: var(--bg-panel-hover);
+      transform: rotate(180deg);
+    }
+
+    .swap-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .translator-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .char-badge {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .panel-footer-bar {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .status-msg-box {
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text-muted);
+    }
+
+    .status-msg-box.success {
+      color: var(--accent-emerald);
+    }
+
+    .status-msg-box.error {
+      color: var(--accent-rose);
+    }
+
+    .status-msg-box.loading {
+      color: #818cf8;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ==========================================================================
+       TAB 2: WORD & CHARACTER COUNTER
+       ========================================================================== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.15rem;
+      position: relative;
+      overflow: hidden;
+      transition: all var(--transition-fast);
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-medium);
+      transform: translateY(-2px);
+    }
+
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: transparent;
+      transition: background var(--transition-fast);
+    }
+
+    .stat-card:hover::before {
+      background: var(--primary-gradient);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .stat-value {
+      font-size: 1.9rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1.1;
+    }
+
+    .secondary-stats-bar {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1.25rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .sec-stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .sec-stat-val {
+      font-weight: 600;
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .quick-transforms {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    /* ==========================================================================
+       TAB 3: MORSE CODE CONVERTER
+       ========================================================================== */
+    .morse-mode-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 0.85rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .mode-pills {
+      display: inline-flex;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-medium);
+      padding: 0.25rem;
+      border-radius: var(--radius-md);
+      gap: 0.25rem;
+    }
+
+    .mode-pill-btn {
+      padding: 0.45rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .mode-pill-btn.active {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .morse-audio-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .morse-guide-note {
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.22);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+    }
+
+    .morse-guide-note svg {
+      width: 18px;
+      height: 18px;
+      color: #818cf8;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .warning-box {
+      margin-top: 1rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: #fca5a5;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .warning-box.visible {
+      display: flex;
+    }
+
+    /* Accordion Cheat Sheet */
+    .morse-accordion {
+      margin-top: 1.5rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: var(--bg-surface);
+    }
+
+    .accordion-trigger {
+      width: 100%;
+      padding: 0.85rem 1.25rem;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      transition: background var(--transition-fast);
+    }
+
+    .accordion-trigger:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .accordion-trigger svg {
+      transition: transform var(--transition-normal);
+    }
+
+    .accordion-trigger.open svg {
+      transform: rotate(180deg);
+    }
+
+    .accordion-body {
+      display: none;
+      padding: 1.25rem;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-panel);
+    }
+
+    .accordion-body.open {
+      display: block;
+    }
+
+    .morse-table-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .morse-char-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+    }
+
+    .morse-char-key {
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .morse-char-code {
+      font-family: 'JetBrains Mono', monospace;
+      color: #a5b4fc;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    /* ==========================================================================
+       Toast Notifications System
+       ========================================================================== */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      background: rgba(17, 20, 29, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-medium);
+      color: var(--text-main);
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transform: translateY(12px);
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast-icon {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .toast-icon svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .toast.toast-success .toast-icon {
+      color: var(--accent-emerald);
+    }
+
+    .toast.toast-error .toast-icon {
+      color: var(--accent-rose);
+    }
+
+    .toast.toast-info .toast-icon {
+      color: #818cf8;
+    }
+
+    /* ==========================================================================
+       Footer
+       ========================================================================== */
+    .app-footer {
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-canvas);
+      padding: 1.5rem 0;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      margin-top: auto;
+    }
+
+    .footer-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.25rem;
+    }
+
+    .footer-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color var(--transition-fast);
+    }
+
+    .footer-link:hover {
+      color: var(--text-main);
+    }
+
+    /* ==========================================================================
+       Responsive Media Queries
+       ========================================================================== */
+    @media (max-width: 900px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .translator-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hero-title {
+        font-size: 1.75rem;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .tab-bar {
+        width: 100%;
+      }
+      .tab-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 0.5rem 0.6rem;
+        font-size: 0.8rem;
+      }
+      .tab-btn span {
+        display: none;
+      }
+      .tab-btn.active span {
+        display: inline;
+      }
+      .header-inner {
+        padding: 0.75rem 1rem;
+      }
+      .main-container {
+        padding: 1.25rem 1rem 2.5rem;
+      }
+      .footer-inner {
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="brand-logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 7V4h16v3"/>
+            <path d="M9 20h6"/>
+            <path d="M12 4v16"/>
+          </svg>
+        </div>
+        <div class="brand-title">
+          TextLab
+          <span class="brand-badge" id="badge-version">v1.0 • GH Pages</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Language Switcher Toggle -->
+        <button id="lang-toggle-btn" class="lang-toggle-btn" title="Toggle Language (VI / EN)" aria-label="Toggle language">
+          <span class="flag" id="lang-flag">🇻🇳</span>
+          <span class="lang-badge-tag" id="lang-text">Tiếng Việt</span>
+        </button>
+
+        <!-- Clean GitHub link -->
+        <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-icon" title="GitHub Repository">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+            <path d="M9 18c-4.51 2-5-2-7-2"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Application Container -->
+  <main class="main-container">
+    
+    <!-- Hero / Headline Section -->
+    <section class="hero-header">
+      <div class="hero-tag">
+        <span class="dot"></span>
+        <span id="hero-tag-text">All-in-one Text Toolkit</span>
+      </div>
+      <h1 class="hero-title" id="hero-title-text">Precision Text Utilities</h1>
+      <p class="hero-desc" id="hero-desc-text">Modern, responsive utilities for translation, real-time statistics, and Morse code transformation.</p>
+    </section>
+
+    <!-- Tab Navigation Segmented Bar -->
+    <div class="tab-bar-container">
+      <nav class="tab-bar" role="tablist" aria-label="TextLab Tools">
+        <button class="tab-btn active" role="tab" aria-selected="true" data-tab="tab-translator" id="tab-btn-translator">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m5 8 6 6"/>
+            <path d="m4 14 6-6 2-3"/>
+            <path d="M2 5h12"/>
+            <path d="M7 2h1"/>
+            <path d="m22 22-5-10-5 10"/>
+            <path d="M14 18h6"/>
+          </svg>
+          <span id="tab-title-translator">Language Translator</span>
+        </button>
+
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="tab-counter" id="tab-btn-counter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <line x1="10" y1="9" x2="8" y2="9"/>
+          </svg>
+          <span id="tab-title-counter">Word & Character Counter</span>
+        </button>
+
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="tab-morse" id="tab-btn-morse">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="6" cy="12" r="2"/>
+            <line x1="12" y1="12" x2="18" y2="12"/>
+            <circle cx="21" cy="12" r="1"/>
+            <path d="M4 6h16"/>
+            <path d="M4 18h16"/>
+          </svg>
+          <span id="tab-title-morse">Morse Code Converter</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- ========================================================================
+         TAB 1: TRANSLATOR PANEL
+         ======================================================================== -->
+    <section class="tab-panel active" id="tab-translator" role="tabpanel">
+      <!-- Controls Bar: Source Selector, Swap Button, Target Selector -->
+      <div class="translator-controls">
+        <div class="lang-select-group">
+          <label for="src-lang-select" class="stat-label" id="label-from-lang" style="margin-bottom:0;">From:</label>
+          <select id="src-lang-select" class="custom-select" aria-label="Source Language">
+            <option value="autodetect">🌐 Auto-detect</option>
+            <option value="en">English (US/UK)</option>
+            <option value="vi" selected>Tiếng Việt</option>
+            <option value="ja">日本語 (Japanese)</option>
+            <option value="ko">한국어 (Korean)</option>
+            <option value="zh-CN">中文 (Chinese)</option>
+            <option value="fr">Français (French)</option>
+            <option value="de">Deutsch (German)</option>
+            <option value="es">Español (Spanish)</option>
+            <option value="ru">Русский (Russian)</option>
+          </select>
+        </div>
+
+        <button id="swap-lang-btn" class="swap-btn" title="Swap Languages (⇄)" aria-label="Swap source and target language">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m7 16-4-4 4-4"/>
+            <path d="m17 8 4 4-4 4"/>
+            <path d="M3 12h18"/>
+          </svg>
+        </button>
+
+        <div class="lang-select-group">
+          <label for="tgt-lang-select" class="stat-label" id="label-to-lang" style="margin-bottom:0;">To:</label>
+          <select id="tgt-lang-select" class="custom-select" aria-label="Target Language">
+            <option value="en" selected>English (US/UK)</option>
+            <option value="vi">Tiếng Việt</option>
+            <option value="ja">日本語 (Japanese)</option>
+            <option value="ko">한국어 (Korean)</option>
+            <option value="zh-CN">中文 (Chinese)</option>
+            <option value="fr">Français (French)</option>
+            <option value="de">Deutsch (German)</option>
+            <option value="es">Español (Spanish)</option>
+            <option value="ru">Русский (Russian)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Editor Grid -->
+      <div class="translator-grid">
+        <!-- Left: Source Card -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-title" id="trans-source-label">Source Text</span>
+              <span class="char-badge" id="trans-src-count">0 chars</span>
+            </div>
+            <div class="panel-actions">
+              <button id="trans-sample-btn" class="btn btn-secondary btn-ghost" title="Insert Sample Text">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                <span id="trans-sample-btn-text">Sample</span>
+              </button>
+              <button id="trans-clear-btn" class="btn btn-secondary btn-ghost" title="Clear text">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <span id="trans-clear-btn-text">Clear</span>
+              </button>
+            </div>
+          </div>
+
+          <textarea id="trans-src-input" class="custom-textarea" placeholder="Enter or paste text to translate... (Ctrl+Enter to translate)"></textarea>
+
+          <div class="panel-footer-bar">
+            <button id="translate-action-btn" class="btn btn-primary">
+              <span id="translate-spinner" class="spinner" style="display:none;"></span>
+              <svg id="translate-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>
+              <span id="translate-btn-text">Translate Now</span>
+            </button>
+            <span class="char-badge" id="trans-shortcut-hint">Ctrl + Enter</span>
+          </div>
+        </div>
+
+        <!-- Right: Target Translation Card -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-title" id="trans-result-label">Translated Output</span>
+              <span class="char-badge" id="trans-tgt-count">0 chars</span>
+            </div>
+            <div class="panel-actions">
+              <button id="trans-copy-btn" class="btn btn-secondary btn-ghost" title="Copy Translation">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                <span id="trans-copy-btn-text">Copy</span>
+              </button>
+            </div>
+          </div>
+
+          <textarea id="trans-tgt-output" class="custom-textarea" readonly placeholder="Translated text will appear here..."></textarea>
+
+          <div class="panel-footer-bar">
+            <div id="trans-status-msg" class="status-msg-box">
+              <span id="trans-status-icon"></span>
+              <span id="trans-status-text">Ready to translate</span>
+            </div>
+            <span class="char-badge" id="trans-api-note">Powered by MyMemory API</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         TAB 2: WORD & CHARACTER COUNTER PANEL
+         ======================================================================== -->
+    <section class="tab-panel" id="tab-counter" role="tabpanel">
+      <!-- 4 Core Metric Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+            <span id="cnt-lbl-words">Total Words</span>
+          </div>
+          <div class="stat-value" id="val-words">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+            <span id="cnt-lbl-chars">Total Characters</span>
+          </div>
+          <div class="stat-value" id="val-chars">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="2" rx="1"/></svg>
+            <span id="cnt-lbl-chars-nospace">Chars (no spaces)</span>
+          </div>
+          <div class="stat-value" id="val-chars-nospace">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5"/></svg>
+            <span id="cnt-lbl-sentences">Estimated Sentences</span>
+          </div>
+          <div class="stat-value" id="val-sentences">0</div>
+        </div>
+      </div>
+
+      <!-- Secondary Metrics Bar -->
+      <div class="secondary-stats-bar">
+        <div class="sec-stat-item">
+          <span id="cnt-lbl-paragraphs">Paragraphs:</span>
+          <span class="sec-stat-val" id="val-paragraphs">0</span>
+        </div>
+        <div class="sec-stat-item">
+          <span id="cnt-lbl-read-time">Est. Reading Time:</span>
+          <span class="sec-stat-val" id="val-read-time">0s</span>
+        </div>
+        <div class="sec-stat-item">
+          <span id="cnt-lbl-speak-time">Est. Speaking Time:</span>
+          <span class="sec-stat-val" id="val-speak-time">0s</span>
+        </div>
+      </div>
+
+      <!-- Counter Input Panel -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <span class="panel-title" id="cnt-editor-title">Content Editor</span>
+          </div>
+          <div class="panel-actions">
+            <button id="cnt-sample-btn" class="btn btn-secondary btn-ghost" title="Insert Sample Text">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              <span id="cnt-sample-btn-text">Sample Text</span>
+            </button>
+            <button id="cnt-copy-btn" class="btn btn-secondary btn-ghost" title="Copy Text">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              <span id="cnt-copy-btn-text">Copy</span>
+            </button>
+            <button id="cnt-clear-btn" class="btn btn-secondary btn-ghost" title="Clear text">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span id="cnt-clear-btn-text">Clear</span>
+            </button>
+          </div>
+        </div>
+
+        <textarea id="cnt-text-input" class="custom-textarea" placeholder="Type or paste your text here to analyze in real-time..."></textarea>
+
+        <!-- Quick Text Transformation Actions -->
+        <div class="quick-transforms">
+          <span class="char-badge" style="display:flex; align-items:center; margin-right:0.5rem;" id="cnt-transform-label">Quick Actions:</span>
+          <button id="btn-trans-upper" class="btn btn-secondary btn-ghost">UPPERCASE</button>
+          <button id="btn-trans-lower" class="btn btn-secondary btn-ghost">lowercase</button>
+          <button id="btn-trans-title" class="btn btn-secondary btn-ghost">Title Case</button>
+          <button id="btn-trans-sentence" class="btn btn-secondary btn-ghost">Sentence case</button>
+          <button id="btn-trans-clean" class="btn btn-secondary btn-ghost">Clean Whitespace</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         TAB 3: MORSE CODE CONVERTER PANEL
+         ======================================================================== -->
+    <section class="tab-panel" id="tab-morse" role="tabpanel">
+      <!-- Mode Bar & Audio Controls -->
+      <div class="morse-mode-bar">
+        <div class="mode-pills" role="radiogroup" aria-label="Conversion Mode">
+          <button id="morse-mode-text" class="mode-pill-btn active" role="radio" aria-checked="true">
+            <span id="morse-mode-text-label">Text → Morse</span>
+          </button>
+          <button id="morse-mode-morse" class="mode-pill-btn" role="radio" aria-checked="false">
+            <span id="morse-mode-morse-label">Morse → Text</span>
+          </button>
+        </div>
+
+        <!-- Audio Beep Player & Sound Action -->
+        <div class="morse-audio-controls">
+          <button id="morse-play-audio-btn" class="btn btn-secondary" title="Play Morse Code Audio Beep">
+            <svg id="morse-audio-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            <span id="morse-play-audio-text">Play Audio Beep</span>
+          </button>
+          <button id="morse-stop-audio-btn" class="btn btn-secondary" style="display:none;" title="Stop Audio">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+            <span id="morse-stop-audio-text">Stop</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Information & Normalization Note -->
+      <div class="morse-guide-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <div>
+          <strong id="morse-rule-title">Standard International Morse Code Rules:</strong>
+          <span id="morse-rule-desc"> Letters are separated by spaces, words separated by slashes ( / ). Accented Vietnamese characters (à, á, ệ, đ...) are automatically normalized to unaccented Latin characters.</span>
+        </div>
+      </div>
+
+      <!-- Morse Grid Layout -->
+      <div class="translator-grid">
+        <!-- Input Panel -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-title" id="morse-input-label">Source Input</span>
+            </div>
+            <div class="panel-actions">
+              <button id="morse-sample-btn" class="btn btn-secondary btn-ghost" title="Insert Sample">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                <span id="morse-sample-btn-text">Sample</span>
+              </button>
+              <button id="morse-clear-btn" class="btn btn-secondary btn-ghost" title="Clear text">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <span id="morse-clear-btn-text">Clear</span>
+              </button>
+            </div>
+          </div>
+
+          <textarea id="morse-input" class="custom-textarea monospace" placeholder="Enter text to convert to Morse code..."></textarea>
+          
+          <div id="morse-warning" class="warning-box">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="morse-warning-text">Unsupported characters detected.</span>
+          </div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-title" id="morse-output-label">Morse Code Result</span>
+            </div>
+            <div class="panel-actions">
+              <button id="morse-copy-btn" class="btn btn-secondary btn-ghost" title="Copy Output">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                <span id="morse-copy-btn-text">Copy</span>
+              </button>
+            </div>
+          </div>
+
+          <textarea id="morse-output" class="custom-textarea monospace" readonly placeholder="Morse code output will appear here..."></textarea>
+        </div>
+      </div>
+
+      <!-- Collapsible International Morse Code Reference Chart -->
+      <div class="morse-accordion">
+        <button id="morse-accordion-btn" class="accordion-trigger" aria-expanded="false">
+          <span id="morse-ref-title">📖 International Morse Code Reference Table</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="morse-accordion-content" class="accordion-body">
+          <div class="morse-table-grid" id="morse-ref-grid">
+            <!-- Dynamically generated Morse reference cells -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Footer Section -->
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div>
+        <span id="footer-copy">TextLab &copy; 2026 • Modern Single-Page Text Utilities. Ready for GitHub Pages.</span>
+      </div>
+      <div class="footer-links">
+        <a href="#tab-translator" class="footer-link nav-shortcut" data-target="tab-translator" id="ft-link-trans">Translator</a>
+        <a href="#tab-counter" class="footer-link nav-shortcut" data-target="tab-counter" id="ft-link-count">Word Counter</a>
+        <a href="#tab-morse" class="footer-link nav-shortcut" data-target="tab-morse" id="ft-link-morse">Morse Code</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================================================
+       APPLICATION JAVASCRIPT
+       ======================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* ======================================================================
+         1. LOCALIZATION & TRANSLATION DICTIONARY
+         ====================================================================== */
+      const I18N = {
+        en: {
+          flag: '🇬🇧',
+          langName: 'English',
+          heroTag: 'All-in-one Text Toolkit',
+          heroTitle: 'Precision Text Utilities',
+          heroDesc: 'Modern, responsive utilities for translation, real-time statistics, and Morse code transformation.',
+          tabTranslator: 'Language Translator',
+          tabCounter: 'Word & Character Counter',
+          tabMorse: 'Morse Code Converter',
+          from: 'From:',
+          to: 'To:',
+          autoDetect: '🌐 Auto-detect',
+          sourceText: 'Source Text',
+          translatedOutput: 'Translated Output',
+          transPlaceholder: 'Enter or paste text to translate... (Ctrl+Enter to translate)',
+          transOutputPlaceholder: 'Translated text will appear here...',
+          translateBtn: 'Translate Now',
+          translatingBtn: 'Translating...',
+          clear: 'Clear',
+          copy: 'Copy',
+          copied: 'Copied to clipboard!',
+          sample: 'Sample',
+          readyToTranslate: 'Ready to translate',
+          poweredBy: 'Powered by MyMemory API',
+          ctrlEnter: 'Ctrl + Enter',
+          errEmptyText: 'Please enter some text to translate.',
+          errNetwork: 'Translation failed. Please check your network connection.',
+          errQuota: 'Free API request limit reached. Please wait a moment.',
+          translatingChunk: (curr, total) => `Translating chunk ${curr} of ${total}...`,
+          translatedSuccess: 'Translated successfully!',
+          
+          // Counter
+          totalWords: 'Total Words',
+          totalChars: 'Total Characters',
+          charsNoSpace: 'Chars (no spaces)',
+          estimatedSentences: 'Estimated Sentences',
+          paragraphs: 'Paragraphs:',
+          estReadTime: 'Est. Reading Time:',
+          estSpeakTime: 'Est. Speaking Time:',
+          contentEditor: 'Content Editor',
+          counterPlaceholder: 'Type or paste your text here to analyze in real-time...',
+          quickActions: 'Quick Actions:',
+          uppercase: 'UPPERCASE',
+          lowercase: 'lowercase',
+          titlecase: 'Title Case',
+          sentencecase: 'Sentence case',
+          cleanSpaces: 'Clean Whitespace',
+
+          // Morse
+          textToMorse: 'Text → Morse',
+          morseToText: 'Morse → Text',
+          morseInputPlaceholderText: 'Enter text to convert to Morse code...',
+          morseInputPlaceholderMorse: 'Enter Morse code (dots . and dashes -, separated by space or /)...',
+          morseOutputPlaceholderMorse: 'Morse code output will appear here...',
+          morseOutputPlaceholderText: 'Decoded text will appear here...',
+          playAudio: 'Play Audio Beep',
+          stopAudio: 'Stop',
+          morseRuleTitle: 'Standard International Morse Code Rules:',
+          morseRuleDesc: ' Letters are separated by spaces, words separated by slashes ( / ). Accented Vietnamese characters (à, á, ệ, đ...) are automatically normalized to unaccented Latin characters.',
+          unsupportedWarning: (chars) => `Unsupported character(s) skipped or flagged: "${chars}"`,
+          invalidMorseWarning: (codes) => `Unrecognized Morse code token(s): "${codes}"`,
+          morseRefTitle: '📖 International Morse Code Reference Table',
+          audioPlaying: 'Playing Morse code audio...',
+          audioStopped: 'Audio playback stopped.',
+
+          // Samples
+          sampleTransVi: 'Xin chào thế giới! TextLab là bộ công cụ văn bản hiện đại với giao diện thanh lịch và tốc độ nhanh chóng.',
+          sampleTransEn: 'Hello world! TextLab is a modern text utilities suite with an elegant interface and lightning-fast speed.',
+          sampleCounter: 'TextLab is an open-source text utilities web application designed with the modern Linear and Vercel dark theme aesthetics.\n\nIt offers fast language translation, detailed word and character counters, and bidirectional international Morse code conversion.\n\nTry pasting your own document, essay, or code comment to see live statistics updated in real-time!',
+          sampleMorseText: 'HELLO WORLD FROM TEXTLAB'
+        },
+        vi: {
+          flag: '🇻🇳',
+          langName: 'Tiếng Việt',
+          heroTag: 'Bộ Công Cụ Xử Lý Văn Bản',
+          heroTitle: 'Tiện Ích Văn Bản Hiện Đại',
+          heroDesc: 'Công cụ dịch thuật đa ngôn ngữ, thống kê từ & ký tự tức thì, và bộ chuyển đổi mã Morse chuẩn quốc tế.',
+          tabTranslator: 'Dịch Thuật Đa Ngôn Ngữ',
+          tabCounter: 'Đếm Từ & Ký Tự',
+          tabMorse: 'Chuyển Đổi Mã Morse',
+          from: 'Từ nguồn:',
+          to: 'Đến đích:',
+          autoDetect: '🌐 Tự động phát hiện',
+          sourceText: 'Văn bản gốc',
+          translatedOutput: 'Kết quả dịch',
+          transPlaceholder: 'Nhập hoặc dán văn bản cần dịch... (Nhấn Ctrl+Enter để dịch)',
+          transOutputPlaceholder: 'Bản dịch sẽ xuất hiện ở đây...',
+          translateBtn: 'Dịch Ngay',
+          translatingBtn: 'Đang dịch...',
+          clear: 'Xóa',
+          copy: 'Sao chép',
+          copied: 'Đã sao chép vào bộ nhớ tạm!',
+          sample: 'Mẫu',
+          readyToTranslate: 'Sẵn sàng dịch thuật',
+          poweredBy: 'Hỗ trợ bởi MyMemory API',
+          ctrlEnter: 'Ctrl + Enter',
+          errEmptyText: 'Vui lòng nhập nội dung cần dịch.',
+          errNetwork: 'Không thể kết nối đến máy chủ dịch thuật. Vui lòng kiểm tra mạng.',
+          errQuota: 'Đã vượt giới hạn yêu cầu miễn phí tạm thời. Vui lòng thử lại sau giây lát.',
+          translatingChunk: (curr, total) => `Đang dịch phần ${curr}/${total}...`,
+          translatedSuccess: 'Dịch thành công!',
+
+          // Counter
+          totalWords: 'Tổng số từ',
+          totalChars: 'Tổng số ký tự',
+          charsNoSpace: 'Ký tự (không dấu cách)',
+          estimatedSentences: 'Số câu ước tính',
+          paragraphs: 'Đoạn văn:',
+          estReadTime: 'Thời gian đọc:',
+          estSpeakTime: 'Thời gian nói:',
+          contentEditor: 'Trình soạn thảo văn bản',
+          counterPlaceholder: 'Gõ hoặc dán văn bản vào đây để phân tích dữ liệu theo thời gian thực...',
+          quickActions: 'Thao tác nhanh:',
+          uppercase: 'CHỮ HOA',
+          lowercase: 'chữ thường',
+          titlecase: 'Viết Hoa Đầu Từ',
+          sentencecase: 'Viết hoa đầu câu',
+          cleanSpaces: 'Chuẩn hóa khoảng trắng',
+
+          // Morse
+          textToMorse: 'Văn bản → Morse',
+          morseToText: 'Morse → Văn bản',
+          morseInputPlaceholderText: 'Nhập văn bản để chuyển sang mã Morse...',
+          morseInputPlaceholderMorse: 'Nhập mã Morse (dấu chấm . và dấu gạch -, cách nhau bằng khoảng trắng hoặc /)...',
+          morseOutputPlaceholderMorse: 'Mã Morse sẽ xuất hiện ở đây...',
+          morseOutputPlaceholderText: 'Văn bản giải mã sẽ xuất hiện ở đây...',
+          playAudio: 'Phát Âm Thanh Beep',
+          stopAudio: 'Dừng',
+          morseRuleTitle: 'Quy ước mã Morse quốc tế:',
+          morseRuleDesc: ' Các ký tự phân tách bằng khoảng trắng, các từ phân tách bằng dấu gạch chéo ( / ). Tiếng Việt có dấu (à, á, ệ, đ...) sẽ tự động được chuẩn hóa sang ký tự Latin không dấu.',
+          unsupportedWarning: (chars) => `Phát hiện ký tự chưa được hỗ trợ: "${chars}"`,
+          invalidMorseWarning: (codes) => `Phát hiện chuỗi Morse không hợp lệ: "${codes}"`,
+          morseRefTitle: '📖 Bảng tra cứu mã Morse Quốc Tế',
+          audioPlaying: 'Đang phát tín hiệu âm thanh Morse...',
+          audioStopped: 'Đã dừng phát âm thanh.',
+
+          // Samples
+          sampleTransVi: 'Xin chào thế giới! TextLab là bộ công cụ văn bản hiện đại với giao diện thanh lịch và tốc độ nhanh chóng.',
+          sampleTransEn: 'Hello world! TextLab is a modern text utilities suite with an elegant interface and lightning-fast speed.',
+          sampleCounter: 'TextLab là một ứng dụng web tiện ích văn bản hiện đại, được thiết kế theo phong cách giao diện tối giản của Linear và Vercel.\n\nỨng dụng cung cấp công cụ dịch thuật tốc độ cao, bộ đếm từ và ký tự tức thời chính xác, cùng trình chuyển đổi mã Morse hai chiều hỗ trợ chuẩn hóa tiếng Việt.\n\nHãy thử dán một đoạn văn, bài báo hoặc ghi chú của bạn để xem số liệu phân tích cập nhật theo thời gian thực!',
+          sampleMorseText: 'TEXTLAB XIN CHAO VIET NAM'
+        }
+      };
+
+      // Current interface language state (defaults to Vietnamese, persists in localStorage)
+      let currentLang = localStorage.getItem('textlab_ui_lang') || 'vi';
+
+      /* ======================================================================
+         2. INTERNATIONAL MORSE CODE MAPS & HELPERS
+         ====================================================================== */
+      const MORSE_MAP = {
+        'A': '.-',     'B': '-...',   'C': '-.-.',   'D': '-..',    'E': '.',
+        'F': '..-.',   'G': '--.',    'H': '....',   'I': '..',     'J': '.---',
+        'K': '-.-',    'L': '.-..',   'M': '--',     'N': '-.',     'O': '---',
+        'P': '.--.',   'Q': '--.-',   'R': '.-.',    'S': '...',    'T': '-',
+        'U': '..-',    'V': '...-',   'W': '.--',    'X': '-..-',   'Y': '-.--',
+        'Z': '--..',
+        '0': '-----',  '1': '.----',  '2': '..---',  '3': '...--',  '4': '....-',
+        '5': '.....',  '6': '-....',  '7': '--...',  '8': '---..',  '9': '----.',
+        '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--',
+        '/': '-..-.',  '(': '-.--.',  ')': '-.--.-', '&': '.-...',  ':': '---...',
+        ';': '-.-.-.', '=': '-...-',  '+': '.-.-.',  '-': '-....-', '_': '..--.-',
+        '"': '.-..-.', '$': '...-..-', '@': '.--.-.'
+      };
+
+      const REVERSE_MORSE_MAP = {};
+      Object.keys(MORSE_MAP).forEach(k => {
+        REVERSE_MORSE_MAP[MORSE_MAP[k]] = k;
+      });
+
+      // Vietnamese normalization utility
+      function normalizeVietnamese(str) {
+        if (!str) return '';
+        return str
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '') // remove combining diacritics
+          .replace(/đ/g, 'd')
+          .replace(/Đ/g, 'D');
+      }
+
+      /* ======================================================================
+         3. AUDIO SYNTHESIZER FOR MORSE CODE (Web Audio API)
+         ====================================================================== */
+      let audioCtx = null;
+      let audioTimeouts = [];
+      let isPlayingAudio = false;
+
+      function getAudioContext() {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+          }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        return audioCtx;
+      }
+
+      function stopMorseAudio() {
+        audioTimeouts.forEach(t => clearTimeout(t));
+        audioTimeouts = [];
+        isPlayingAudio = false;
+        const playBtn = document.getElementById('morse-play-audio-btn');
+        const stopBtn = document.getElementById('morse-stop-audio-btn');
+        if (playBtn) playBtn.style.display = 'inline-flex';
+        if (stopBtn) stopBtn.style.display = 'none';
+      }
+
+      function playMorseAudio(morseString) {
+        stopMorseAudio();
+        const ctx = getAudioContext();
+        if (!ctx) {
+          showToast('Web Audio is not supported in this browser.', 'error');
+          return;
+        }
+
+        const dotDuration = 65; // ms
+        const dashDuration = dotDuration * 3;
+        const intraCharGap = dotDuration;
+        const interCharGap = dotDuration * 3;
+        const wordGap = dotDuration * 7;
+        const frequency = 680; // Hz pleasant tone
+
+        isPlayingAudio = true;
+        const playBtn = document.getElementById('morse-play-audio-btn');
+        const stopBtn = document.getElementById('morse-stop-audio-btn');
+        if (playBtn) playBtn.style.display = 'none';
+        if (stopBtn) stopBtn.style.display = 'inline-flex';
+
+        showToast(I18N[currentLang].audioPlaying, 'info');
+
+        let currentTimeOffset = 0;
+        const words = morseString.trim().split(/\s*\/\s*|\n+/);
+
+        words.forEach((word, wIdx) => {
+          const letters = word.trim().split(/\s+/);
+          letters.forEach((letter, lIdx) => {
+            for (let i = 0; i < letter.length; i++) {
+              const symbol = letter[i];
+              if (symbol === '.' || symbol === '-') {
+                const dur = symbol === '.' ? dotDuration : dashDuration;
+                const offset = currentTimeOffset;
+
+                const timeoutId = setTimeout(() => {
+                  if (!isPlayingAudio) return;
+                  playTone(frequency, dur / 1000);
+                }, offset);
+                audioTimeouts.push(timeoutId);
+
+                currentTimeOffset += dur + intraCharGap;
+              }
+            }
+            currentTimeOffset += interCharGap - intraCharGap;
+          });
+          if (wIdx < words.length - 1) {
+            currentTimeOffset += wordGap - interCharGap;
+          }
+        });
+
+        // Auto reset when playback completes
+        const endTimeout = setTimeout(() => {
+          stopMorseAudio();
+        }, currentTimeOffset + 100);
+        audioTimeouts.push(endTimeout);
+      }
+
+      function playTone(freq, durationSec) {
+        if (!audioCtx) return;
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+          // Smooth envelope to eliminate audio clicks
+          gain.gain.setValueAtTime(0, audioCtx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.005);
+          gain.gain.setValueAtTime(0.2, audioCtx.currentTime + durationSec - 0.005);
+          gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + durationSec);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start();
+          osc.stop(audioCtx.currentTime + durationSec);
+        } catch (e) {
+          console.error('Audio playback error', e);
+        }
+      }
+
+      /* ======================================================================
+         4. TOAST NOTIFICATIONS
+         ====================================================================== */
+      function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+
+        let iconSvg = '';
+        if (type === 'success') {
+          iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+        } else if (type === 'error') {
+          iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+        } else {
+          iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+        }
+
+        toast.innerHTML = `<span class="toast-icon">${iconSvg}</span><span>${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+
+        // Animate entrance
+        requestAnimationFrame(() => {
+          toast.classList.add('show');
+        });
+
+        // Auto remove after 3.2 seconds
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+          }, 250);
+        }, 3200);
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      /* ======================================================================
+         5. UI LOCALIZATION SWITCHER
+         ====================================================================== */
+      function applyLocalization(lang) {
+        currentLang = lang;
+        localStorage.setItem('textlab_ui_lang', lang);
+        const t = I18N[lang] || I18N.en;
+
+        document.documentElement.lang = lang;
+        document.getElementById('lang-flag').textContent = t.flag;
+        document.getElementById('lang-text').textContent = t.langName;
+
+        // Hero
+        document.getElementById('hero-tag-text').textContent = t.heroTag;
+        document.getElementById('hero-title-text').textContent = t.heroTitle;
+        document.getElementById('hero-desc-text').textContent = t.heroDesc;
+
+        // Tabs
+        document.getElementById('tab-title-translator').textContent = t.tabTranslator;
+        document.getElementById('tab-title-counter').textContent = t.tabCounter;
+        document.getElementById('tab-title-morse').textContent = t.tabMorse;
+
+        // Tab 1: Translator
+        document.getElementById('label-from-lang').textContent = t.from;
+        document.getElementById('label-to-lang').textContent = t.to;
+        const autoDetectOpt = document.querySelector('#src-lang-select option[value="autodetect"]');
+        if (autoDetectOpt) autoDetectOpt.textContent = t.autoDetect;
+
+        document.getElementById('trans-source-label').textContent = t.sourceText;
+        document.getElementById('trans-result-label').textContent = t.translatedOutput;
+        document.getElementById('trans-src-input').placeholder = t.transPlaceholder;
+        document.getElementById('trans-tgt-output').placeholder = t.transOutputPlaceholder;
+        document.getElementById('translate-btn-text').textContent = t.translateBtn;
+        document.getElementById('trans-sample-btn-text').textContent = t.sample;
+        document.getElementById('trans-clear-btn-text').textContent = t.clear;
+        document.getElementById('trans-copy-btn-text').textContent = t.copy;
+        document.getElementById('trans-api-note').textContent = t.poweredBy;
+        document.getElementById('trans-shortcut-hint').textContent = t.ctrlEnter;
+
+        const statusEl = document.getElementById('trans-status-text');
+        if (statusEl && !statusEl.dataset.custom) {
+          statusEl.textContent = t.readyToTranslate;
+        }
+
+        // Tab 2: Word Counter
+        document.getElementById('cnt-lbl-words').textContent = t.totalWords;
+        document.getElementById('cnt-lbl-chars').textContent = t.totalChars;
+        document.getElementById('cnt-lbl-chars-nospace').textContent = t.charsNoSpace;
+        document.getElementById('cnt-lbl-sentences').textContent = t.estimatedSentences;
+        document.getElementById('cnt-lbl-paragraphs').textContent = t.paragraphs;
+        document.getElementById('cnt-lbl-read-time').textContent = t.estReadTime;
+        document.getElementById('cnt-lbl-speak-time').textContent = t.estSpeakTime;
+        document.getElementById('cnt-editor-title').textContent = t.contentEditor;
+        document.getElementById('cnt-sample-btn-text').textContent = t.sample;
+        document.getElementById('cnt-copy-btn-text').textContent = t.copy;
+        document.getElementById('cnt-clear-btn-text').textContent = t.clear;
+        document.getElementById('cnt-text-input').placeholder = t.counterPlaceholder;
+        document.getElementById('cnt-transform-label').textContent = t.quickActions;
+        document.getElementById('btn-trans-upper').textContent = t.uppercase;
+        document.getElementById('btn-trans-lower').textContent = t.lowercase;
+        document.getElementById('btn-trans-title').textContent = t.titlecase;
+        document.getElementById('btn-trans-sentence').textContent = t.sentencecase;
+        document.getElementById('btn-trans-clean').textContent = t.cleanSpaces;
+
+        // Tab 3: Morse Code
+        document.getElementById('morse-mode-text-label').textContent = t.textToMorse;
+        document.getElementById('morse-mode-morse-label').textContent = t.morseToText;
+        document.getElementById('morse-play-audio-text').textContent = t.playAudio;
+        document.getElementById('morse-stop-audio-text').textContent = t.stopAudio;
+        document.getElementById('morse-rule-title').textContent = t.morseRuleTitle;
+        document.getElementById('morse-rule-desc').textContent = t.morseRuleDesc;
+        document.getElementById('morse-sample-btn-text').textContent = t.sample;
+        document.getElementById('morse-clear-btn-text').textContent = t.clear;
+        document.getElementById('morse-copy-btn-text').textContent = t.copy;
+        document.getElementById('morse-ref-title').textContent = t.morseRefTitle;
+
+        // Dynamic placeholder update depending on current Morse mode
+        updateMorsePlaceholders();
+
+        // Footer links
+        document.getElementById('ft-link-trans').textContent = t.tabTranslator;
+        document.getElementById('ft-link-count').textContent = t.tabCounter;
+        document.getElementById('ft-link-morse').textContent = t.tabMorse;
+      }
+
+      /* ======================================================================
+         6. TAB SWITCHING LOGIC
+         ====================================================================== */
+      const tabButtons = document.querySelectorAll('.tab-btn');
+      const tabPanels = document.querySelectorAll('.tab-panel');
+
+      function switchTab(tabId) {
+        tabButtons.forEach(btn => {
+          const isActive = btn.dataset.tab === tabId;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+
+        tabPanels.forEach(panel => {
+          panel.classList.toggle('active', panel.id === tabId);
+        });
+
+        // Stop any running Morse audio when switching away
+        if (tabId !== 'tab-morse') {
+          stopMorseAudio();
+        }
+      }
+
+      tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          switchTab(btn.dataset.tab);
+        });
+      });
+
+      // Footer shortcuts
+      document.querySelectorAll('.nav-shortcut').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = link.dataset.target;
+          if (target) {
+            switchTab(target);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        });
+      });
+
+      /* ======================================================================
+         7. TAB 1: TRANSLATOR IMPLEMENTATION
+         ====================================================================== */
+      const srcLangSelect = document.getElementById('src-lang-select');
+      const tgtLangSelect = document.getElementById('tgt-lang-select');
+      const swapLangBtn = document.getElementById('swap-lang-btn');
+      const transSrcInput = document.getElementById('trans-src-input');
+      const transTgtOutput = document.getElementById('trans-tgt-output');
+      const translateActionBtn = document.getElementById('translate-action-btn');
+      const translateSpinner = document.getElementById('translate-spinner');
+      const translateBtnIcon = document.getElementById('translate-btn-icon');
+      const translateBtnText = document.getElementById('translate-btn-text');
+      const transClearBtn = document.getElementById('trans-clear-btn');
+      const transCopyBtn = document.getElementById('trans-copy-btn');
+      const transSampleBtn = document.getElementById('trans-sample-btn');
+      const transSrcCount = document.getElementById('trans-src-count');
+      const transTgtCount = document.getElementById('trans-tgt-count');
+      const transStatusMsg = document.getElementById('trans-status-msg');
+      const transStatusText = document.getElementById('trans-status-text');
+
+      // Update char count badge
+      transSrcInput.addEventListener('input', () => {
+        transSrcCount.textContent = `${transSrcInput.value.length} chars`;
+      });
+
+      // Swap Languages Button
+      swapLangBtn.addEventListener('click', () => {
+        const srcVal = srcLangSelect.value;
+        const tgtVal = tgtLangSelect.value;
+
+        if (srcVal === 'autodetect') {
+          // If source was auto-detect, set it to English or target
+          srcLangSelect.value = tgtVal;
+          tgtLangSelect.value = tgtVal === 'vi' ? 'en' : 'vi';
+        } else {
+          srcLangSelect.value = tgtVal;
+          tgtLangSelect.value = srcVal;
+        }
+
+        // Also swap text if both exist
+        const srcText = transSrcInput.value;
+        const tgtText = transTgtOutput.value;
+        if (tgtText.trim()) {
+          transSrcInput.value = tgtText;
+          transTgtOutput.value = srcText;
+          transSrcCount.textContent = `${transSrcInput.value.length} chars`;
+          transTgtCount.textContent = `${transTgtOutput.value.length} chars`;
+        }
+
+        showToast('Languages swapped', 'info');
+      });
+
+      // Sample Text for Translator
+      transSampleBtn.addEventListener('click', () => {
+        const t = I18N[currentLang];
+        transSrcInput.value = srcLangSelect.value === 'vi' ? t.sampleTransVi : t.sampleTransEn;
+        transSrcCount.textContent = `${transSrcInput.value.length} chars`;
+        transSrcInput.focus();
+      });
+
+      // Clear Translator
+      transClearBtn.addEventListener('click', () => {
+        transSrcInput.value = '';
+        transTgtOutput.value = '';
+        transSrcCount.textContent = '0 chars';
+        transTgtCount.textContent = '0 chars';
+        setTransStatus(I18N[currentLang].readyToTranslate, 'normal');
+        transSrcInput.focus();
+      });
+
+      // Copy Output
+      transCopyBtn.addEventListener('click', () => {
+        const text = transTgtOutput.value;
+        if (!text.trim()) return;
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(I18N[currentLang].copied, 'success');
+        }).catch(() => {
+          showToast('Failed to copy to clipboard', 'error');
+        });
+      });
+
+      // Shortcut: Ctrl + Enter / Cmd + Enter to translate
+      transSrcInput.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          executeTranslation();
+        }
+      });
+
+      translateActionBtn.addEventListener('click', executeTranslation);
+
+      function setTransStatus(text, state = 'normal') {
+        transStatusText.textContent = text;
+        transStatusText.dataset.custom = state !== 'normal' ? 'true' : '';
+        transStatusMsg.className = 'status-msg-box';
+        if (state === 'loading') transStatusMsg.classList.add('loading');
+        if (state === 'error') transStatusMsg.classList.add('error');
+        if (state === 'success') transStatusMsg.classList.add('success');
+      }
+
+      // Chunk splitting algorithm for handling text longer than MyMemory 500-char limit
+      function splitIntoChunks(text, maxChunkLen = 420) {
+        if (text.length <= maxChunkLen) {
+          return [text];
+        }
+
+        const chunks = [];
+        // Split by double newline (paragraphs), single newline, or sentence punctuation
+        const paragraphs = text.split(/(\n+)/);
+        let currentChunk = '';
+
+        for (const part of paragraphs) {
+          if ((currentChunk + part).length <= maxChunkLen) {
+            currentChunk += part;
+          } else {
+            if (currentChunk) {
+              chunks.push(currentChunk);
+              currentChunk = '';
+            }
+
+            if (part.length <= maxChunkLen) {
+              currentChunk = part;
+            } else {
+              // Part itself is too long, split by sentences
+              const sentenceParts = part.split(/([.!?。！？]+\s*)/);
+              for (const sPart of sentenceParts) {
+                if ((currentChunk + sPart).length <= maxChunkLen) {
+                  currentChunk += sPart;
+                } else {
+                  if (currentChunk) {
+                    chunks.push(currentChunk);
+                    currentChunk = '';
+                  }
+                  if (sPart.length <= maxChunkLen) {
+                    currentChunk = sPart;
+                  } else {
+                    // Split by word space
+                    const words = sPart.split(/(\s+)/);
+                    for (const word of words) {
+                      if ((currentChunk + word).length <= maxChunkLen) {
+                        currentChunk += word;
+                      } else {
+                        if (currentChunk) chunks.push(currentChunk);
+                        currentChunk = word;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        if (currentChunk) {
+          chunks.push(currentChunk);
+        }
+
+        return chunks.filter(c => c.length > 0);
+      }
+
+      // Decode HTML entities often returned by translation APIs
+      function decodeHtmlEntities(str) {
+        const txt = document.createElement('textarea');
+        txt.innerHTML = str;
+        return txt.value;
+      }
+
+      async function executeTranslation() {
+        const text = transSrcInput.value.trim();
+        const t = I18N[currentLang];
+
+        if (!text) {
+          showToast(t.errEmptyText, 'error');
+          transSrcInput.focus();
+          return;
+        }
+
+        const sourceLang = srcLangSelect.value;
+        const targetLang = tgtLangSelect.value;
+
+        if (sourceLang === targetLang) {
+          transTgtOutput.value = text;
+          transTgtCount.textContent = `${text.length} chars`;
+          setTransStatus(t.translatedSuccess, 'success');
+          return;
+        }
+
+        // Set Loading UI
+        translateActionBtn.disabled = true;
+        translateSpinner.style.display = 'inline-block';
+        translateBtnIcon.style.display = 'none';
+        translateBtnText.textContent = t.translatingBtn;
+        setTransStatus(t.translatingBtn, 'loading');
+
+        try {
+          const chunks = splitIntoChunks(text, 400);
+          const translatedChunks = [];
+
+          for (let i = 0; i < chunks.length; i++) {
+            if (chunks.length > 1) {
+              setTransStatus(t.translatingChunk(i + 1, chunks.length), 'loading');
+            }
+
+            const chunk = chunks[i];
+            const langPair = `${sourceLang}|${targetLang}`;
+            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=${encodeURIComponent(langPair)}`;
+
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(`HTTP Error ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.responseStatus === 200 || data.responseStatus === '200') {
+              let translated = data.responseData.translatedText || '';
+              translated = decodeHtmlEntities(translated);
+              translatedChunks.push(translated);
+            } else if (data.responseStatus === 429 || (data.responseDetails && data.responseDetails.includes('LIMIT'))) {
+              throw new Error('QUOTA_LIMIT');
+            } else {
+              // Try fallback or raw translation text if present
+              if (data.responseData && data.responseData.translatedText) {
+                translatedChunks.push(decodeHtmlEntities(data.responseData.translatedText));
+              } else {
+                throw new Error(data.responseDetails || 'Translation failed');
+              }
+            }
+
+            // Small delay between requests to be courteous to the free API
+            if (i < chunks.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 150));
+            }
+          }
+
+          const fullResult = translatedChunks.join('');
+          transTgtOutput.value = fullResult;
+          transTgtCount.textContent = `${fullResult.length} chars`;
+          setTransStatus(t.translatedSuccess, 'success');
+          showToast(t.translatedSuccess, 'success');
+        } catch (err) {
+          console.error('Translation error:', err);
+          if (err.message === 'QUOTA_LIMIT') {
+            setTransStatus(t.errQuota, 'error');
+            showToast(t.errQuota, 'error');
+          } else {
+            setTransStatus(t.errNetwork, 'error');
+            showToast(t.errNetwork, 'error');
+          }
+        } finally {
+          translateActionBtn.disabled = false;
+          translateSpinner.style.display = 'none';
+          translateBtnIcon.style.display = 'inline-block';
+          translateBtnText.textContent = t.translateBtn;
+        }
+      }
+
+      /* ======================================================================
+         8. TAB 2: WORD & CHARACTER COUNTER IMPLEMENTATION
+         ====================================================================== */
+      const cntTextInput = document.getElementById('cnt-text-input');
+      const valWords = document.getElementById('val-words');
+      const valChars = document.getElementById('val-chars');
+      const valCharsNoSpace = document.getElementById('val-chars-nospace');
+      const valSentences = document.getElementById('val-sentences');
+      const valParagraphs = document.getElementById('val-paragraphs');
+      const valReadTime = document.getElementById('val-read-time');
+      const valSpeakTime = document.getElementById('val-speak-time');
+
+      const cntSampleBtn = document.getElementById('cnt-sample-btn');
+      const cntCopyBtn = document.getElementById('cnt-copy-btn');
+      const cntClearBtn = document.getElementById('cnt-clear-btn');
+
+      const btnTransUpper = document.getElementById('btn-trans-upper');
+      const btnTransLower = document.getElementById('btn-trans-lower');
+      const btnTransTitle = document.getElementById('btn-trans-title');
+      const btnTransSentence = document.getElementById('btn-trans-sentence');
+      const btnTransClean = document.getElementById('btn-trans-clean');
+
+      function calculateStats(text) {
+        // Total Characters (support unicode surrogate pairs)
+        const totalChars = [...text].length;
+
+        // Total Characters excluding whitespace
+        const charsNoSpace = [...text.replace(/\s/g, '')].length;
+
+        // Total Words (Unicode aware, accurately supports Vietnamese accented words)
+        let words = 0;
+        const trimmed = text.trim();
+        if (trimmed) {
+          // Match sequence of unicode letters/numbers
+          const matches = trimmed.match(/[\p{Letter}\p{Number}]+/gu);
+          words = matches ? matches.length : 0;
+        }
+
+        // Estimated Sentences
+        let sentences = 0;
+        if (trimmed) {
+          const sentenceMatches = trimmed.match(/[^.!?\n]+[.!?]+(\s|$)|[^.!?\n]+$/g);
+          sentences = sentenceMatches ? sentenceMatches.filter(s => s.trim().length > 0).length : 0;
+        }
+
+        // Paragraphs
+        let paragraphs = 0;
+        if (trimmed) {
+          paragraphs = text.split(/\n+/).filter(p => p.trim().length > 0).length;
+        }
+
+        // Reading Time (~200 wpm) & Speaking Time (~130 wpm)
+        const readSeconds = Math.ceil((words / 200) * 60);
+        const speakSeconds = Math.ceil((words / 130) * 60);
+
+        function formatDuration(sec) {
+          if (sec < 60) return `${sec}s`;
+          const mins = Math.floor(sec / 60);
+          const remSec = sec % 60;
+          return remSec > 0 ? `${mins}m ${remSec}s` : `${mins}m`;
+        }
+
+        // Update DOM
+        valWords.textContent = words.toLocaleString();
+        valChars.textContent = totalChars.toLocaleString();
+        valCharsNoSpace.textContent = charsNoSpace.toLocaleString();
+        valSentences.textContent = sentences.toLocaleString();
+        valParagraphs.textContent = paragraphs.toLocaleString();
+        valReadTime.textContent = formatDuration(readSeconds);
+        valSpeakTime.textContent = formatDuration(speakSeconds);
+      }
+
+      cntTextInput.addEventListener('input', () => {
+        calculateStats(cntTextInput.value);
+      });
+
+      // Sample Button
+      cntSampleBtn.addEventListener('click', () => {
+        cntTextInput.value = I18N[currentLang].sampleCounter;
+        calculateStats(cntTextInput.value);
+        cntTextInput.focus();
+      });
+
+      // Clear Button
+      cntClearBtn.addEventListener('click', () => {
+        cntTextInput.value = '';
+        calculateStats('');
+        cntTextInput.focus();
+      });
+
+      // Copy Button
+      cntCopyBtn.addEventListener('click', () => {
+        const text = cntTextInput.value;
+        if (!text.trim()) return;
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(I18N[currentLang].copied, 'success');
+        });
+      });
+
+      // Quick Text Transforms
+      btnTransUpper.addEventListener('click', () => {
+        cntTextInput.value = cntTextInput.value.toUpperCase();
+        calculateStats(cntTextInput.value);
+      });
+
+      btnTransLower.addEventListener('click', () => {
+        cntTextInput.value = cntTextInput.value.toLowerCase();
+        calculateStats(cntTextInput.value);
+      });
+
+      btnTransTitle.addEventListener('click', () => {
+        cntTextInput.value = cntTextInput.value.toLowerCase().replace(/(?:^|\s|\b)\p{L}/gu, char => char.toUpperCase());
+        calculateStats(cntTextInput.value);
+      });
+
+      btnTransSentence.addEventListener('click', () => {
+        cntTextInput.value = cntTextInput.value.toLowerCase().replace(/(^\s*|\.\s*|\?\s*|!\s*|\n\s*)(\p{L})/gu, (m, p1, p2) => p1 + p2.toUpperCase());
+        calculateStats(cntTextInput.value);
+      });
+
+      btnTransClean.addEventListener('click', () => {
+        cntTextInput.value = cntTextInput.value
+          .replace(/[ \t]+/g, ' ')
+          .replace(/\n\s*\n/g, '\n\n')
+          .trim();
+        calculateStats(cntTextInput.value);
+      });
+
+      /* ======================================================================
+         9. TAB 3: MORSE CODE CONVERTER IMPLEMENTATION
+         ====================================================================== */
+      let morseMode = 'text'; // 'text' (Text to Morse) or 'morse' (Morse to Text)
+
+      const morseModeTextBtn = document.getElementById('morse-mode-text');
+      const morseModeMorseBtn = document.getElementById('morse-mode-morse');
+      const morseInput = document.getElementById('morse-input');
+      const morseOutput = document.getElementById('morse-output');
+      const morseInputLabel = document.getElementById('morse-input-label');
+      const morseOutputLabel = document.getElementById('morse-output-label');
+      const morseWarning = document.getElementById('morse-warning');
+      const morseWarningText = document.getElementById('morse-warning-text');
+      const morseSampleBtn = document.getElementById('morse-sample-btn');
+      const morseClearBtn = document.getElementById('morse-clear-btn');
+      const morseCopyBtn = document.getElementById('morse-copy-btn');
+      const morsePlayAudioBtn = document.getElementById('morse-play-audio-btn');
+      const morseStopAudioBtn = document.getElementById('morse-stop-audio-btn');
+      const morseAccordionBtn = document.getElementById('morse-accordion-btn');
+      const morseAccordionContent = document.getElementById('morse-accordion-content');
+      const morseRefGrid = document.getElementById('morse-ref-grid');
+
+      function updateMorsePlaceholders() {
+        const t = I18N[currentLang];
+        if (morseMode === 'text') {
+          morseInputLabel.textContent = `${t.sourceText} (${t.uppercase})`;
+          morseOutputLabel.textContent = t.morseToText.split('→')[1] || 'Morse';
+          morseInput.placeholder = t.morseInputPlaceholderText;
+          morseOutput.placeholder = t.morseOutputPlaceholderMorse;
+        } else {
+          morseInputLabel.textContent = 'Morse Code Input';
+          morseOutputLabel.textContent = t.translatedOutput;
+          morseInput.placeholder = t.morseInputPlaceholderMorse;
+          morseOutput.placeholder = t.morseOutputPlaceholderText;
+        }
+      }
+
+      function setMorseMode(mode) {
+        morseMode = mode;
+        morseModeTextBtn.classList.toggle('active', mode === 'text');
+        morseModeMorseBtn.classList.toggle('active', mode === 'morse');
+        morseModeTextBtn.setAttribute('aria-checked', mode === 'text');
+        morseModeMorseBtn.setAttribute('aria-checked', mode === 'morse');
+
+        updateMorsePlaceholders();
+        // Clear warning on mode toggle
+        hideMorseWarning();
+
+        // Swap contents if there was output
+        const prevOutput = morseOutput.value.trim();
+        if (prevOutput) {
+          morseInput.value = prevOutput;
+          convertMorse();
+        } else {
+          convertMorse();
+        }
+      }
+
+      morseModeTextBtn.addEventListener('click', () => setMorseMode('text'));
+      morseModeMorseBtn.addEventListener('click', () => setMorseMode('morse'));
+
+      function showMorseWarning(msg) {
+        morseWarningText.textContent = msg;
+        morseWarning.classList.add('visible');
+      }
+
+      function hideMorseWarning() {
+        morseWarning.classList.remove('visible');
+      }
+
+      function convertMorse() {
+        const rawInput = morseInput.value;
+        const t = I18N[currentLang];
+
+        if (!rawInput.trim()) {
+          morseOutput.value = '';
+          hideMorseWarning();
+          return;
+        }
+
+        if (morseMode === 'text') {
+          // Normalize Vietnamese diacritics to basic Latin
+          const normalized = normalizeVietnamese(rawInput).toUpperCase();
+          const words = normalized.split(/\r?\n|\s{2,}|\s+/);
+          const morseWords = [];
+          const unsupportedChars = new Set();
+
+          words.forEach(word => {
+            if (!word) return;
+            const morseChars = [];
+            for (let i = 0; i < word.length; i++) {
+              const ch = word[i];
+              if (MORSE_MAP[ch]) {
+                morseChars.push(MORSE_MAP[ch]);
+              } else {
+                unsupportedChars.add(ch);
+                morseChars.push('?');
+              }
+            }
+            morseWords.push(morseChars.join(' '));
+          });
+
+          morseOutput.value = morseWords.join(' / ');
+
+          if (unsupportedChars.size > 0) {
+            const list = Array.from(unsupportedChars).join(', ');
+            showMorseWarning(t.unsupportedWarning(list));
+          } else {
+            hideMorseWarning();
+          }
+        } else {
+          // Morse to Text
+          // Replace common alternative dot/dash symbols
+          let cleanedMorse = rawInput
+            .replace(/[•·]/g, '.')
+            .replace(/[–—_]/g, '-');
+
+          // Split words by '/' or newlines or triple spaces
+          const rawWords = cleanedMorse.split(/\s*\/\s*|\n+|\s{3,}/);
+          const decodedWords = [];
+          const invalidTokens = new Set();
+
+          rawWords.forEach(w => {
+            if (!w.trim()) return;
+            const tokens = w.trim().split(/\s+/);
+            let wordText = '';
+
+            tokens.forEach(tok => {
+              if (REVERSE_MORSE_MAP[tok]) {
+                wordText += REVERSE_MORSE_MAP[tok];
+              } else if (tok === '') {
+                // empty
+              } else {
+                invalidTokens.add(tok);
+                wordText += '?';
+              }
+            });
+
+            decodedWords.push(wordText);
+          });
+
+          morseOutput.value = decodedWords.join(' ');
+
+          if (invalidTokens.size > 0) {
+            const list = Array.from(invalidTokens).slice(0, 5).join(', ');
+            showMorseWarning(t.invalidMorseWarning(list));
+          } else {
+            hideMorseWarning();
+          }
+        }
+      }
+
+      morseInput.addEventListener('input', convertMorse);
+
+      // Sample Button
+      morseSampleBtn.addEventListener('click', () => {
+        if (morseMode === 'text') {
+          morseInput.value = I18N[currentLang].sampleMorseText;
+        } else {
+          morseInput.value = '.... . .-.. .-.. --- / .-- --- .-. .-.. -..';
+        }
+        convertMorse();
+        morseInput.focus();
+      });
+
+      // Clear Button
+      morseClearBtn.addEventListener('click', () => {
+        morseInput.value = '';
+        morseOutput.value = '';
+        hideMorseWarning();
+        stopMorseAudio();
+        morseInput.focus();
+      });
+
+      // Copy Button
+      morseCopyBtn.addEventListener('click', () => {
+        const text = morseOutput.value;
+        if (!text.trim()) return;
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(I18N[currentLang].copied, 'success');
+        });
+      });
+
+      // Play Audio Beep
+      morsePlayAudioBtn.addEventListener('click', () => {
+        let morseToPlay = '';
+        if (morseMode === 'text') {
+          morseToPlay = morseOutput.value;
+        } else {
+          morseToPlay = morseInput.value;
+        }
+
+        if (!morseToPlay.trim()) {
+          showToast('No Morse code to play.', 'error');
+          return;
+        }
+
+        playMorseAudio(morseToPlay);
+      });
+
+      morseStopAudioBtn.addEventListener('click', () => {
+        stopMorseAudio();
+        showToast(I18N[currentLang].audioStopped, 'info');
+      });
+
+      // Collapsible Morse Reference Table
+      morseAccordionBtn.addEventListener('click', () => {
+        const isOpen = morseAccordionContent.classList.toggle('open');
+        morseAccordionBtn.classList.toggle('open', isOpen);
+        morseAccordionBtn.setAttribute('aria-expanded', isOpen);
+      });
+
+      function buildMorseRefTable() {
+        if (!morseRefGrid) return;
+        morseRefGrid.innerHTML = '';
+        Object.keys(MORSE_MAP).forEach(char => {
+          const item = document.createElement('div');
+          item.className = 'morse-char-item';
+          item.innerHTML = `
+            <span class="morse-char-key">${char}</span>
+            <span class="morse-char-code">${MORSE_MAP[char]}</span>
+          `;
+          morseRefGrid.appendChild(item);
+        });
+      }
+
+      /* ======================================================================
+         10. INITIALIZATION
+         ====================================================================== */
+      // Language Toggle Click Event
+      document.getElementById('lang-toggle-btn').addEventListener('click', () => {
+        const nextLang = currentLang === 'vi' ? 'en' : 'vi';
+        applyLocalization(nextLang);
+        showToast(`Language set to ${I18N[nextLang].langName}`, 'info');
+      });
+
+      // Initialize on load
+      buildMorseRefTable();
+      applyLocalization(currentLang);
+      calculateStats('');
+
+    })();
+  </script>
+</body>
+</html>
